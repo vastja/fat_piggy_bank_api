@@ -1,0 +1,6 @@
+[package]
+name = "fat_piggy_bank_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
