@@ -1,5 +1,5 @@
 use axum::{routing::get, Json, Router};
-use chrono::{Date, DateTime, Utc};
+use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result};
 use serde::Serialize;
 use tokio::net::TcpListener;
