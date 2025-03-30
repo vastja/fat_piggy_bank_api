@@ -1,5 +1,6 @@
 use axum::{routing::get, Json, Router};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{Date, DateTime, Utc};
+use rusqlite::{Connection, Result};
 use serde::Serialize;
 use tokio::net::TcpListener;
 
@@ -14,13 +15,26 @@ async fn main() {
 }
 
 async fn expenses() -> Json<Vec<Expense>> {
-    let expenses = vec![Expense {
-        id: 0,
-        date: Utc.with_ymd_and_hms(2025, 5, 17, 0, 0, 0).unwrap(),
-        tag: String::from("Groccery"),
-        amount: 100,
-    }];
-    Json(expenses)
+    let connection = Connection::open("../fat_piggy_bank_importer/fat_piggy_bank.db")
+        .expect("Database connection failed.");
+
+    let mut select = connection
+        .prepare("SELECT * FROM expenses")
+        .expect("Retrieving expenses failed.");
+
+    let expenses: Result<Vec<Expense>> = select
+        .query_map([], |row| {
+            Ok(Expense {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                tag: row.get(2)?,
+                amount: row.get(3)?,
+            })
+        })
+        .unwrap()
+        .collect();
+
+    Json(expenses.unwrap())
 }
 
 #[derive(Serialize)]
