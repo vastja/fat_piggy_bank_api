@@ -25,10 +25,10 @@ async fn expenses(Query(params): Query<ExpensesParams>) -> Json<Vec<Expense>> {
 
     let mut select = match params.group {
         true => connection
-            .prepare("SELECT id, MIN(date), tag, SUM(amount) FROM expenses GROUP BY tag")
+            .prepare("SELECT ex.id, MIN(ex.date), tg.name, tg.color, SUM(ex.amount) FROM expenses AS ex JOIN tags AS tg ON ex.tag_id == tg.id GROUP BY tg.name")
             .expect("Retrieving expenses failed."),
         false => connection
-            .prepare("SELECT * FROM expenses")
+            .prepare("SELECT ex.id, ex.date, tg.name, tg.color, ex.amount FROM expenses AS ex JOIN tags AS tg ON ex.tag_id = tg.id")
             .expect("Retrieving expenses failed."),
     };
 
@@ -37,8 +37,11 @@ async fn expenses(Query(params): Query<ExpensesParams>) -> Json<Vec<Expense>> {
             Ok(Expense {
                 id: row.get(0)?,
                 date: row.get(1)?,
-                tag: row.get(2)?,
-                amount: row.get(3)?,
+                tag: Tag {
+                    name: row.get(2)?,
+                    color: row.get(3)?,
+                },
+                amount: row.get(4)?,
             })
         })
         .unwrap()
@@ -51,6 +54,12 @@ async fn expenses(Query(params): Query<ExpensesParams>) -> Json<Vec<Expense>> {
 struct Expense {
     id: u32,
     date: DateTime<Utc>,
-    tag: String,
+    tag: Tag,
     amount: i32,
+}
+
+#[derive(Serialize)]
+struct Tag {
+    name: String,
+    color: String,
 }
